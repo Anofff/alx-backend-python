@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
 """
-Task 0: Custom class-based context manager for Database connection
+Task 1: Reusable Query Context Manager
+
+Create a reusable context manager that takes a query as input and executes it,
+managing both connection and the query execution.
 """
 
 import sqlite3
 
 
-class DatabaseConnection:
-    """Custom context manager for database connections"""
+class ExecuteQuery:
+    """Reusable context manager for executing queries"""
 
     def __init__(self, db_path="users.db"):
         self.db_path = db_path
         self.connection = None
         self.cursor = None
+        self.results = None
 
     def __enter__(self):
         """Enter the context - open connection"""
         self.connection = sqlite3.connect(self.db_path)
         self.cursor = self.connection.cursor()
-        return self.cursor
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit the context - close connection"""
@@ -27,8 +31,17 @@ class DatabaseConnection:
         if self.connection:
             self.connection.close()
 
+    def execute_query(self, query, params=None):
+        """Execute the query and store results"""
+        if params:
+            self.cursor.execute(query, params)
+        else:
+            self.cursor.execute(query)
+        self.results = self.cursor.fetchall()
+        return self.results
 
-# Create sample database
+
+# Create sample database with age column
 conn = sqlite3.connect("users.db")
 cursor = conn.cursor()
 
@@ -62,10 +75,11 @@ cursor.execute(
 conn.commit()
 conn.close()
 
-# Use the context manager with SELECT * FROM users
-with DatabaseConnection() as cursor:
-    cursor.execute("SELECT * FROM users")
-    results = cursor.fetchall()
+# Use ExecuteQuery context manager with the specified query and parameter
+with ExecuteQuery() as executor:
+    query = "SELECT * FROM users WHERE age > ?"
+    parameter = 25
+    results = executor.execute_query(query, (parameter,))
     print("Query results:")
     for row in results:
         print(row)
