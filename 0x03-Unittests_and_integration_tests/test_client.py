@@ -94,18 +94,21 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Set up test fixtures"""
-        cls.get_patcher = patch("client.get_json")
-        cls.mock_get_json = cls.get_patcher.start()
+        cls.get_patcher = patch("requests.get")
+        cls.mock_get = cls.get_patcher.start()
 
         # Configure the mock to return different payloads based on URL
         def side_effect(url):
+            mock_response = Mock()
             if "orgs/google" in url and "repos" not in url:
-                return cls.org_payload
+                mock_response.json.return_value = cls.org_payload
             elif "orgs/google/repos" in url:
-                return cls.repos_payload
-            return {}
+                mock_response.json.return_value = cls.repos_payload
+            else:
+                mock_response.json.return_value = {}
+            return mock_response
 
-        cls.mock_get_json.side_effect = side_effect
+        cls.mock_get.side_effect = side_effect
 
     @classmethod
     def tearDownClass(cls):
