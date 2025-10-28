@@ -115,13 +115,21 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         """Clean up after tests"""
         cls.get_patcher.stop()
 
-    def test_public_repos_integration(self):
+    def test_public_repos(self):
         """Integration test for public_repos method"""
         client = GithubOrgClient("google")
         repos = client.public_repos()
 
         # This should return the actual repo names from the fixture
         self.assertEqual(repos, self.expected_repos)
+
+    def test_public_repos_with_license(self):
+        """Integration test for public_repos with license filter"""
+        client = GithubOrgClient("google")
+        repos = client.public_repos(license="apache-2.0")
+
+        # This should return only the apache-2.0 licensed repos
+        self.assertEqual(repos, self.apache2_repos)
 
 
 if __name__ == "__main__":
